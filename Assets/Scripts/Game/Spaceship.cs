@@ -19,22 +19,18 @@ namespace Photon.Pun.Demo.Asteroids
 {
     public class Spaceship : MonoBehaviour
     {
-        public float RotationSpeed = 90.0f;
-        public float MovementSpeed = 2.0f;
-        public float MaxSpeed = 0.2f;
+        public float MovementSpeed;
 
-        public ParticleSystem Destruction;
-        public GameObject EngineTrail;
         public GameObject BulletPrefab;
 
         private PhotonView photonView;
 
         private new Rigidbody rigidbody;
         private new Collider collider;
-        private new Renderer renderer;
 
-        private float rotation = 0.0f;
-        private float acceleration = 0.0f;
+        private Vector3 moveDirection = Vector3.up;
+        private Vector3 mousePosition = Vector3.zero;
+        private Plane gamePlane = new Plane(Vector3.up, new Vector3(0, 0, 20));
         private float shootingTimer = 0.0f;
 
         private bool controllable = true;
@@ -47,15 +43,15 @@ namespace Photon.Pun.Demo.Asteroids
 
             rigidbody = GetComponent<Rigidbody>();
             collider = GetComponent<Collider>();
-            renderer = GetComponent<Renderer>();
         }
 
         public void Start()
         {
-            foreach (Renderer r in GetComponentsInChildren<Renderer>())
-            {
-                r.material.color = AsteroidsGame.GetColor(photonView.Owner.GetPlayerNumber());
-            }
+
+            Transform renderObj = transform.Find("RenderObj");
+            Renderer r = renderObj.GetComponent<Renderer>();
+
+            r.material.SetColor("Base Map", AsteroidsGame.GetColor(photonView.Owner.GetPlayerNumber()));    
         }
 
         public void Update()
@@ -65,8 +61,8 @@ namespace Photon.Pun.Demo.Asteroids
                 return;
             }
 
-            rotation = Input.GetAxis("Horizontal");
-            acceleration = Input.GetAxis("Vertical");
+            moveDirection = new Vector3(Input.GetAxis("Horizontal"), 0.0f, Input.GetAxis("Vertical"));
+            mousePosition = Input.mousePosition;
 
             if (Input.GetButton("Jump") && shootingTimer <= 0.0)
             {
@@ -93,18 +89,16 @@ namespace Photon.Pun.Demo.Asteroids
                 return;
             }
 
-            Quaternion rot = rigidbody.rotation * Quaternion.Euler(0, rotation * RotationSpeed * Time.fixedDeltaTime, 0);
-            rigidbody.MoveRotation(rot);
-
-            Vector3 force = (rot * Vector3.forward) * acceleration * 1000.0f * MovementSpeed * Time.fixedDeltaTime;
-            rigidbody.AddForce(force);
-
-            if (rigidbody.velocity.magnitude > (MaxSpeed * 1000.0f))
+            Ray mouseRay = Camera.main.ScreenPointToRay(mousePosition);
+            float t = 0.0f;
+            if (gamePlane.Raycast(mouseRay,out t))
             {
-                rigidbody.velocity = rigidbody.velocity.normalized * MaxSpeed * 1000.0f;
+                Vector3 lookPos = mouseRay.GetPoint(t);
+                transform.LookAt(lookPos);
             }
 
-            CheckExitScreen();
+            transform.position += moveDirection * MovementSpeed * Time.fixedDeltaTime;
+
         }
 
         #endregion
@@ -129,12 +123,9 @@ namespace Photon.Pun.Demo.Asteroids
             rigidbody.angularVelocity = Vector3.zero;
 
             collider.enabled = false;
-            renderer.enabled = false;
 
             controllable = false;
 
-            EngineTrail.SetActive(false);
-            Destruction.Play();
 
             if (photonView.IsMine)
             {
@@ -179,34 +170,10 @@ namespace Photon.Pun.Demo.Asteroids
         public void RespawnSpaceship()
         {
             collider.enabled = true;
-            renderer.enabled = true;
 
             controllable = true;
-
-            EngineTrail.SetActive(true);
-            Destruction.Stop();
         }
         
         #endregion
-
-        private void CheckExitScreen()
-        {
-            if (Camera.main == null)
-            {
-                return;
-            }
-            
-            if (Mathf.Abs(rigidbody.position.x) > (Camera.main.orthographicSize * Camera.main.aspect))
-            {
-                rigidbody.position = new Vector3(-Mathf.Sign(rigidbody.position.x) * Camera.main.orthographicSize * Camera.main.aspect, 0, rigidbody.position.z);
-                rigidbody.position -= rigidbody.position.normalized * 0.1f; // offset a little bit to avoid looping back & forth between the 2 edges 
-            }
-
-            if (Mathf.Abs(rigidbody.position.z) > Camera.main.orthographicSize)
-            {
-                rigidbody.position = new Vector3(rigidbody.position.x, rigidbody.position.y, -Mathf.Sign(rigidbody.position.z) * Camera.main.orthographicSize);
-                rigidbody.position -= rigidbody.position.normalized * 0.1f; // offset a little bit to avoid looping back & forth between the 2 edges 
-            }
-        }
     }
 }
