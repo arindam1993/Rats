@@ -27,6 +27,8 @@ namespace Photon.Pun.Demo.Asteroids
 
         public GameObject[] AsteroidPrefabs;
 
+        private GameObject SpawnPositions;
+
         #region UNITY
 
         public void Awake()
@@ -168,13 +170,11 @@ namespace Photon.Pun.Demo.Asteroids
 
         private void StartGame()
         {
-            float angularStart = (360.0f / PhotonNetwork.CurrentRoom.PlayerCount) * PhotonNetwork.LocalPlayer.GetPlayerNumber();
-            float x = 20.0f * Mathf.Sin(angularStart * Mathf.Deg2Rad);
-            float z = 20.0f * Mathf.Cos(angularStart * Mathf.Deg2Rad);
-            Vector3 position = new Vector3(x, 0.0f, z);
-            Quaternion rotation = Quaternion.Euler(0.0f, angularStart, 0.0f);
+            SpawnPositions = GameObject.Find("SpawnPositions");
+            int playerIdx = PhotonNetwork.LocalPlayer.GetPlayerNumber();
+            Vector3 position = SpawnPositions.GetComponentsInChildren<Transform>()[playerIdx].position;
 
-            PhotonNetwork.Instantiate("Spaceship", position, rotation, 0);
+            PhotonNetwork.Instantiate("Spaceship", position, Quaternion.identity, 0);
 
             if (PhotonNetwork.IsMasterClient)
             {
