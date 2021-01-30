@@ -30,7 +30,7 @@ namespace Photon.Pun.Demo.Asteroids
 
         private Vector3 moveDirection = Vector3.up;
         private Vector3 mousePosition = Vector3.zero;
-        private Plane gamePlane = new Plane(Vector3.up, new Vector3(0, 0, 20));
+        private Plane gamePlane = new Plane(new Vector3(0, 0, -1), new Vector3(0, 0, 0));
         private float shootingTimer = 0.0f;
 
         private bool controllable = true;
@@ -61,7 +61,7 @@ namespace Photon.Pun.Demo.Asteroids
                 return;
             }
 
-            moveDirection = new Vector3(Input.GetAxis("Horizontal"), 0.0f, Input.GetAxis("Vertical"));
+            moveDirection = new Vector3(Input.GetAxis("Horizontal"), Input.GetAxis("Vertical"), 0.0f);
             mousePosition = Input.mousePosition;
 
             if (Input.GetButton("Jump") && shootingTimer <= 0.0)
@@ -94,7 +94,9 @@ namespace Photon.Pun.Demo.Asteroids
             if (gamePlane.Raycast(mouseRay,out t))
             {
                 Vector3 lookPos = mouseRay.GetPoint(t);
-                transform.LookAt(lookPos);
+                Vector3 lookDir = Vector3.Normalize(lookPos - transform.position);
+
+                transform.up = lookDir;
             }
 
             transform.position += moveDirection * MovementSpeed * Time.fixedDeltaTime;
