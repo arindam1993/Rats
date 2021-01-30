@@ -32,6 +32,7 @@ namespace Photon.Pun.Demo.Asteroids
         private Vector3 mousePosition = Vector3.zero;
         private Plane gamePlane = new Plane(new Vector3(0, 0, -1), new Vector3(0, 0, 0));
         private float shootingTimer = 0.0f;
+        private float cameraZOffset = -100.0f;
 
         private bool controllable = true;
 
@@ -100,6 +101,8 @@ namespace Photon.Pun.Demo.Asteroids
             }
 
             transform.position += moveDirection * MovementSpeed * Time.fixedDeltaTime;
+
+            Camera.main.transform.position = new Vector3(transform.position.x, transform.position.y, cameraZOffset);
 
         }
 
