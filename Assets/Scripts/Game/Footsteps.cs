@@ -8,9 +8,6 @@ public class Footsteps : MonoBehaviour
 
     private bool isWalking = false;
 
-    // will handle later
-    private bool isSneaking = false;
-
     void Start()
     {
         audioSource = GetComponent<AudioSource>();
@@ -24,7 +21,12 @@ public class Footsteps : MonoBehaviour
 
     private void GetWalkingState() {
         if (Input.GetButton("Horizontal") || Input.GetButton("Vertical")) {
-            isWalking = true;
+            // left shift puts user in sneak mode
+            if (Input.GetKey(KeyCode.LeftShift)) {
+                isWalking = false;
+            } else {
+                isWalking = true;
+            }
         } else {
             isWalking = false;
         }
