@@ -23,6 +23,7 @@ namespace Photon.Pun.Demo.Asteroids
         public float MovementSpeed;
         public float fov;
         public bool IsFlashlightOn;
+        public Vector3 KnockbackVelocity = new Vector3(0,0,0);
 
         public GameObject BulletPrefab;
 
@@ -34,7 +35,11 @@ namespace Photon.Pun.Demo.Asteroids
         private Vector3 moveDirection = Vector3.up;
         private Vector3 mousePosition = Vector3.zero;
         private Plane gamePlane = new Plane(new Vector3(0, 0, -1), new Vector3(0, 0, 0));
-        private float shootingTimer = 0.0f;
+
+        public float AttackCooldown;
+        public float AttackRadius;
+        public float AttackIntensity;
+        private float attackTimer = 0.0f;
 
         private Animator animator;
         private float cameraZOffset = -100.0f;
@@ -112,9 +117,12 @@ namespace Photon.Pun.Demo.Asteroids
                 Flashlight.enabled = IsFlashlightOn;
             }
 
-            if (Input.GetMouseButtonDown(0)) {
+            if (Input.GetMouseButtonDown(0) && attackTimer <= 0.0f) {
                 photonView.RPC("Fire", RpcTarget.AllViaServer);
+                attackTimer = AttackCooldown;
             }
+
+            attackTimer -= Time.deltaTime;
         }
 
 
@@ -191,7 +199,7 @@ namespace Photon.Pun.Demo.Asteroids
         }
 
         public void FixedUpdate()
-        {
+        {   
             if (!photonView.IsMine)
             {
                 return;
@@ -202,20 +210,27 @@ namespace Photon.Pun.Demo.Asteroids
                 return;
             }
 
-            Ray mouseRay = Camera.main.ScreenPointToRay(mousePosition);
-            float t = 0.0f;
-            if (gamePlane.Raycast(mouseRay,out t))
+            // If being knocked back then only knockback
+            if (KnockbackVelocity.magnitude > 0.001f)
             {
-                Vector3 lookPos = mouseRay.GetPoint(t);
-                Vector3 lookDir = Vector3.Normalize(lookPos - transform.position);
+                rigidbody.MovePosition(transform.position + KnockbackVelocity * Time.fixedDeltaTime);
+                //decay knockback veclocity
+                KnockbackVelocity = KnockbackVelocity * 0.5f;
+            } else
+            {
+                Ray mouseRay = Camera.main.ScreenPointToRay(mousePosition);
+                float t = 0.0f;
+                if (gamePlane.Raycast(mouseRay, out t))
+                {
+                    Vector3 lookPos = mouseRay.GetPoint(t);
+                    Vector3 lookDir = Vector3.Normalize(lookPos - transform.position);
 
-                transform.up = lookDir;
+                    transform.up = lookDir;
+                }
+
+                rigidbody.MovePosition(transform.position + moveDirection * MovementSpeed * Time.fixedDeltaTime);
             }
-
-            rigidbody.MovePosition(transform.position + moveDirection * MovementSpeed * Time.fixedDeltaTime);
-
             Camera.main.transform.position = new Vector3(transform.position.x, transform.position.y, cameraZOffset);
-
         }
 
         private void OnTriggerEnter2D(Collider2D collision)
@@ -295,6 +310,22 @@ namespace Photon.Pun.Demo.Asteroids
         public void Fire(PhotonMessageInfo info)
         {
             animator.SetTrigger("attack");
+
+            if (photonView.IsMine)
+            {
+                Vector2 hitCenter = transform.position + transform.up * AttackRadius;
+                Collider2D[] hits = Physics2D.OverlapCircleAll(hitCenter, AttackRadius, playerLayer);
+
+                foreach(Collider2D hit in hits)
+                {
+                    Spaceship player = hit.gameObject.GetComponent<Spaceship>();
+                    if(player != this)
+                    {
+                        Vector3 hitDirection = Vector3.Normalize(player.transform.position - transform.position);
+                        player.KnockbackVelocity = hitDirection * AttackIntensity;
+                    }
+                }
+            }
         }
 
         [PunRPC]
@@ -311,11 +342,13 @@ namespace Photon.Pun.Demo.Asteroids
             {
                 //We own this player: send the others our data
                 stream.SendNext(IsFlashlightOn);
+                stream.SendNext(KnockbackVelocity);
             }
             else
             {
                 //Network player, receive data
                 IsFlashlightOn = (bool)stream.ReceiveNext();
+                KnockbackVelocity = (Vector3)stream.ReceiveNext();
             }
         }
 
