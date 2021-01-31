@@ -25,14 +25,18 @@ namespace Photon.Pun.Demo.Asteroids
 
         private PhotonView photonView;
 
-        private new Rigidbody rigidbody;
+        private new Rigidbody2D rigidbody;
         private new Collider collider;
 
         private Vector3 moveDirection = Vector3.up;
         private Vector3 mousePosition = Vector3.zero;
         private Plane gamePlane = new Plane(new Vector3(0, 0, -1), new Vector3(0, 0, 0));
         private float shootingTimer = 0.0f;
+
+        private Animator animator;
         private float cameraZOffset = -100.0f;
+
+        private Vector3 lastPosition;
 
         private bool controllable = true;
 
@@ -42,7 +46,7 @@ namespace Photon.Pun.Demo.Asteroids
         {
             photonView = GetComponent<PhotonView>();
 
-            rigidbody = GetComponent<Rigidbody>();
+            rigidbody = GetComponent<Rigidbody2D>();
             collider = GetComponent<Collider>();
         }
 
@@ -50,9 +54,13 @@ namespace Photon.Pun.Demo.Asteroids
         {
 
             Transform renderObj = transform.Find("RenderObj");
+            animator = renderObj.GetComponent<Animator>();
+
             Renderer r = renderObj.GetComponent<Renderer>();
 
-            r.material.SetColor("Base Map", AsteroidsGame.GetColor(photonView.Owner.GetPlayerNumber()));    
+            lastPosition = transform.position;
+            r.material.SetColor("Base Map", AsteroidsGame.GetColor(photonView.Owner.GetPlayerNumber()));
+            StartCoroutine(AnimationWatcher());
         }
 
         public void Update()
@@ -100,7 +108,7 @@ namespace Photon.Pun.Demo.Asteroids
                 transform.up = lookDir;
             }
 
-            transform.position += moveDirection * MovementSpeed * Time.fixedDeltaTime;
+            rigidbody.MovePosition(transform.position + moveDirection * MovementSpeed * Time.fixedDeltaTime);
 
             Camera.main.transform.position = new Vector3(transform.position.x, transform.position.y, cameraZOffset);
 
@@ -117,6 +125,17 @@ namespace Photon.Pun.Demo.Asteroids
             photonView.RPC("RespawnSpaceship", RpcTarget.AllViaServer);
         }
 
+        private IEnumerator AnimationWatcher()
+        {
+            while (true)
+            {
+                yield return new WaitForSeconds(0.1f);
+                float animationSpeed = (transform.position - lastPosition).magnitude * Time.deltaTime;
+                animator.SetBool("isRunning", animationSpeed * 10000.0f > 0.0f);
+                lastPosition = transform.position;
+            }
+        }
+
         #endregion
 
         #region PUN CALLBACKS
@@ -125,7 +144,6 @@ namespace Photon.Pun.Demo.Asteroids
         public void DestroySpaceship()
         {
             rigidbody.velocity = Vector3.zero;
-            rigidbody.angularVelocity = Vector3.zero;
 
             collider.enabled = false;
 
