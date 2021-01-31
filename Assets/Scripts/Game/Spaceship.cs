@@ -83,12 +83,15 @@ namespace Photon.Pun.Demo.Asteroids
 
         public void Update()
         {
+            if (!photonView.IsMine)
+            {
+                //Flashlight.enabled = false;
+            }
+
             if (!photonView.IsMine || !controllable)
             {
                 return;
-            }
-
-            UpdateVisibleLights();
+            }      
 
             moveDirection = new Vector3(Input.GetAxis("Horizontal"), Input.GetAxis("Vertical"), 0.0f);
             mousePosition = Input.mousePosition;
@@ -106,6 +109,16 @@ namespace Photon.Pun.Demo.Asteroids
             }
         }
 
+        public void LateUpdate()
+        {
+            if (!photonView.IsMine || !controllable)
+            {
+                return;
+            }
+
+            UpdateVisibleLights();
+        }
+
         private void UpdateVisibleLights()
         {   
             // Find all lights in a circluar range
@@ -117,12 +130,11 @@ namespace Photon.Pun.Demo.Asteroids
                 Spaceship player = playerGO.GetComponent<Spaceship>();
                 if (player && player != this)
                 {
+                    Debug.DrawLine(transform.position, player.transform.position, Color.red, 0.1f, false);
                     if (IsEnemyLightVisible(player))
                     {
+                        player.Flashlight.enabled = true;
                         player.Flashlight.intensity = 1.0f;
-                    } else
-                    {
-                        player.Flashlight.intensity = 0.0f;
                     } 
                 }
             }
@@ -148,7 +160,7 @@ namespace Photon.Pun.Demo.Asteroids
             {
                 float currAngle = i * angleStep;
                 Vector3 conePt = origin + Quaternion.AngleAxis(-currAngle, new Vector3(0, 0, 1)) * leftEdge;
-                Debug.DrawLine(origin, conePt);
+                Debug.DrawLine(origin + new Vector3(0, 0, -50), conePt + new Vector3(0, 0, -50), Color.green, 0.1f, false);
                 if (!Physics2D.Linecast(origin, conePt, obstacleLayer)) return true;
             }
 
