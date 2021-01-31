@@ -174,6 +174,9 @@ namespace Photon.Pun.Demo.Asteroids
             int playerIdx = PhotonNetwork.LocalPlayer.GetPlayerNumber();
             Vector3 position = SpawnPositions.GetComponentsInChildren<Transform>()[playerIdx].position;
 
+            PhotonNetwork.SendRate = 60;
+            PhotonNetwork.SerializationRate = 60;
+
             PhotonNetwork.Instantiate("Spaceship", position, Quaternion.identity, 0);
 
             if (PhotonNetwork.IsMasterClient)
