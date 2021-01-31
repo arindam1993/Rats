@@ -38,7 +38,7 @@ RenderSettings:
   m_ReflectionIntensity: 1
   m_CustomReflection: {fileID: 0}
   m_Sun: {fileID: 0}
-  m_IndirectSpecularColor: {r: 0.12731749, g: 0.13414757, b: 0.1210787, a: 1}
+  m_IndirectSpecularColor: {r: 0, g: 0, b: 0, a: 1}
   m_UseRadianceAmbientProbe: 0
 --- !u!157 &3
 LightmapSettings:
@@ -3150,6 +3150,22 @@ PrefabInstance:
     - target: {fileID: 1841884057551083622, guid: 1e5cf80b096b06f4090a54862f86dc4e, type: 3}
       propertyPath: m_Name
       value: MusicMenu
+      objectReference: {fileID: 0}
+    - target: {fileID: 1841884057551083623, guid: 1e5cf80b096b06f4090a54862f86dc4e, type: 3}
+      propertyPath: MaxDistance
+      value: 6
+      objectReference: {fileID: 0}
+    - target: {fileID: 1841884057551083623, guid: 1e5cf80b096b06f4090a54862f86dc4e, type: 3}
+      propertyPath: rolloffMode
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 1841884057551083623, guid: 1e5cf80b096b06f4090a54862f86dc4e, type: 3}
+      propertyPath: panLevelCustomCurve.m_Curve.Array.data[0].value
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 1841884057551083623, guid: 1e5cf80b096b06f4090a54862f86dc4e, type: 3}
+      propertyPath: reverbZoneMixCustomCurve.m_Curve.Array.data[0].value
+      value: 0.433
       objectReference: {fileID: 0}
     m_RemovedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: 1e5cf80b096b06f4090a54862f86dc4e, type: 3}
