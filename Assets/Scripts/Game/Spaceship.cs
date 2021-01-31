@@ -25,7 +25,7 @@ namespace Photon.Pun.Demo.Asteroids
 
         private PhotonView photonView;
 
-        private new Rigidbody rigidbody;
+        private new Rigidbody2D rigidbody;
         private new Collider collider;
 
         private Vector3 moveDirection = Vector3.up;
@@ -46,7 +46,7 @@ namespace Photon.Pun.Demo.Asteroids
         {
             photonView = GetComponent<PhotonView>();
 
-            rigidbody = GetComponent<Rigidbody>();
+            rigidbody = GetComponent<Rigidbody2D>();
             collider = GetComponent<Collider>();
         }
 
@@ -108,7 +108,7 @@ namespace Photon.Pun.Demo.Asteroids
                 transform.up = lookDir;
             }
 
-            transform.position += moveDirection * MovementSpeed * Time.fixedDeltaTime;
+            rigidbody.MovePosition(transform.position + moveDirection * MovementSpeed * Time.fixedDeltaTime);
 
             Camera.main.transform.position = new Vector3(transform.position.x, transform.position.y, cameraZOffset);
 
@@ -144,7 +144,6 @@ namespace Photon.Pun.Demo.Asteroids
         public void DestroySpaceship()
         {
             rigidbody.velocity = Vector3.zero;
-            rigidbody.angularVelocity = Vector3.zero;
 
             collider.enabled = false;
 
