@@ -9,7 +9,7 @@
 // --------------------------------------------------------------------------------------------------------------------
 
 using System.Collections;
-
+using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -28,6 +28,8 @@ namespace Photon.Pun.Demo.Asteroids
         public GameObject[] AsteroidPrefabs;
 
         private GameObject SpawnPositions;
+
+        public List<Spaceship> notMySpaceships;
 
         #region UNITY
 
@@ -62,6 +64,16 @@ namespace Photon.Pun.Demo.Asteroids
         }
 
         #endregion
+
+        public void AddNotMySpaceship(Spaceship s)
+        {
+            if(notMySpaceships == null)
+            {
+                notMySpaceships = new List<Spaceship>();
+            }
+
+            notMySpaceships.Add(s);
+        }
 
         #region COROUTINES
 

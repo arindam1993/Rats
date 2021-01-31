@@ -45,6 +45,7 @@ namespace Photon.Pun.Demo.Asteroids
         private Light2D Headlight;
         private int lightLayer;
         private int obstacleLayer;
+        private int playerLayer;
 
         #region UNITY
 
@@ -57,6 +58,8 @@ namespace Photon.Pun.Demo.Asteroids
 
             lightLayer = 1 << LayerMask.NameToLayer("Light");
             obstacleLayer = 1 << LayerMask.NameToLayer("Obstacle");
+            playerLayer = 1 << LayerMask.NameToLayer("Player");
+
         }
 
         public void Start()
@@ -74,6 +77,9 @@ namespace Photon.Pun.Demo.Asteroids
             {
                 Headlight.intensity = 1.0f;
                 Flashlight.intensity = 1.0f;
+            } else
+            {
+                AsteroidsGameManager.Instance.AddNotMySpaceship(this);
             }
 
             lastPosition = transform.position;
@@ -83,15 +89,12 @@ namespace Photon.Pun.Demo.Asteroids
 
         public void Update()
         {
-            if (!photonView.IsMine)
-            {
-                Flashlight.enabled = false;
-            }
-
             if (!photonView.IsMine || !controllable)
             {
                 return;
-            }      
+            }
+
+            UpdateVisibleLights();
 
             moveDirection = new Vector3(Input.GetAxis("Horizontal"), Input.GetAxis("Vertical"), 0.0f);
             mousePosition = Input.mousePosition;
@@ -109,21 +112,31 @@ namespace Photon.Pun.Demo.Asteroids
             }
         }
 
-        public void LateUpdate()
-        {
-            if (!photonView.IsMine || !controllable)
-            {
-                return;
-            }
-
-            UpdateVisibleLights();
-        }
 
         private void UpdateVisibleLights()
-        {   
+        {
             // Find all lights in a circluar range
-            Collider2D[] inRange = Physics2D.OverlapCircleAll(transform.position, 10.0f, lightLayer);
+            //Collider2D[] inRange = Physics2D.OverlapCircleAll(transform.position, 10.0f, lightLayer);
+            foreach (Spaceship other in AsteroidsGameManager.Instance.notMySpaceships)
+            {
+                other.Flashlight.enabled = false;
+            }
 
+            foreach (Spaceship other in AsteroidsGameManager.Instance.notMySpaceships)
+            {
+                if(Vector3.Distance(transform.position, other.transform.position) < 20.0f)
+                {
+
+                    Debug.DrawLine(transform.position, other.transform.position, Color.red, 0.1f, false);
+                    if (IsEnemyLightVisible(other))
+                    {
+                        other.Flashlight.enabled = true;
+                        other.Flashlight.intensity = 1.0f;
+                    }
+                }
+            }
+
+            /*
             foreach(Collider2D c in inRange)
             {
                 GameObject playerGO = c.transform.parent.gameObject;
@@ -138,13 +151,14 @@ namespace Photon.Pun.Demo.Asteroids
                     }
                 }
             }
+            */
 
         }
 
         private bool IsEnemyLightVisible(Spaceship player)
         {
             // if I have line of sight to the enemy then i definitely hcan see the light
-            if (!Physics2D.Linecast(transform.position, player.transform.position, obstacleLayer)) return true;
+            // if (!Physics2D.Linecast(transform.position, player.transform.position, obstacleLayer)) return true;
 
             //Sweep the light cone
             Vector3 origin = player.transform.position;
@@ -159,12 +173,14 @@ namespace Photon.Pun.Demo.Asteroids
             {
                 float currAngle = i * angleStep;
                 Vector3 conePt = origin + Quaternion.AngleAxis(-currAngle, new Vector3(0, 0, -1)) * leftEdge;
-                RaycastHit2D hit = Physics2D.Linecast(origin, conePt, obstacleLayer);
+                RaycastHit2D hit = Physics2D.Linecast(origin, conePt, obstacleLayer | playerLayer);
                 Vector3 litHitPt = hit ? toVec3(hit.point + hit.normal * 0.0001f) : conePt;
+                RaycastHit2D lightHit = Physics2D.Linecast(transform.position, litHitPt, obstacleLayer | playerLayer);
                 Debug.DrawLine(origin, litHitPt , Color.green, 0.1f, false);
-                Debug.DrawLine(transform.position, litHitPt , Color.yellow, 0.1f, false);
+                Debug.DrawLine(transform.position, litHitPt , !lightHit ? Color.blue : Color.yellow, 0.1f, false);
 
-                if (!Physics2D.Linecast(transform.position, litHitPt, obstacleLayer)) return true;
+
+                if (!lightHit) return true;
             }
 
             return false;
