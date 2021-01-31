@@ -24,6 +24,7 @@ namespace Photon.Pun.Demo.Asteroids
         public float fov;
         public bool IsFlashlightOn;
         public Vector3 KnockbackVelocity = new Vector3(0,0,0);
+        private Vector3 initKnockbackVelocity;
 
         public GameObject BulletPrefab;
 
@@ -211,11 +212,12 @@ namespace Photon.Pun.Demo.Asteroids
             }
 
             // If being knocked back then only knockback
-            if (KnockbackVelocity.magnitude > 0.001f)
+            if (Vector3.Dot(initKnockbackVelocity, KnockbackVelocity) > 0.0f)
             {
                 rigidbody.MovePosition(transform.position + KnockbackVelocity * Time.fixedDeltaTime);
                 //decay knockback veclocity
-                KnockbackVelocity = KnockbackVelocity * 0.5f;
+                Vector3 decay = 2.0f * Time.fixedDeltaTime * -1.0f * initKnockbackVelocity;
+                KnockbackVelocity = KnockbackVelocity + decay;
             } else
             {
                 Ray mouseRay = Camera.main.ScreenPointToRay(mousePosition);
@@ -322,10 +324,17 @@ namespace Photon.Pun.Demo.Asteroids
                     if(player != this)
                     {
                         Vector3 hitDirection = Vector3.Normalize(player.transform.position - transform.position);
-                        player.KnockbackVelocity = hitDirection * AttackIntensity;
+                        player.photonView.RPC("Knockback", RpcTarget.AllViaServer, hitDirection * AttackIntensity);
                     }
                 }
             }
+        }
+
+        [PunRPC]
+        public void Knockback(Vector3 knockbackDirection, PhotonMessageInfo info)
+        {
+            KnockbackVelocity = knockbackDirection;
+            initKnockbackVelocity = knockbackDirection;
         }
 
         [PunRPC]
@@ -342,13 +351,11 @@ namespace Photon.Pun.Demo.Asteroids
             {
                 //We own this player: send the others our data
                 stream.SendNext(IsFlashlightOn);
-                stream.SendNext(KnockbackVelocity);
             }
             else
             {
                 //Network player, receive data
                 IsFlashlightOn = (bool)stream.ReceiveNext();
-                KnockbackVelocity = (Vector3)stream.ReceiveNext();
             }
         }
 
