@@ -20,6 +20,7 @@ namespace Photon.Pun.Demo.Asteroids
     public class Spaceship : MonoBehaviour
     {
         public float MovementSpeed;
+        public float fov;
 
         public GameObject BulletPrefab;
 
@@ -175,12 +176,27 @@ namespace Photon.Pun.Demo.Asteroids
                 Vector3 conePt = origin + Quaternion.AngleAxis(-currAngle, new Vector3(0, 0, -1)) * leftEdge;
                 RaycastHit2D hit = Physics2D.Linecast(origin, conePt, obstacleLayer | playerLayer);
                 Vector3 litHitPt = hit ? toVec3(hit.point + hit.normal * 0.0001f) : conePt;
-                RaycastHit2D lightHit = Physics2D.Linecast(transform.position, litHitPt, obstacleLayer | playerLayer);
-                Debug.DrawLine(origin, litHitPt , Color.green, 0.1f, false);
-                Debug.DrawLine(transform.position, litHitPt , !lightHit ? Color.blue : Color.yellow, 0.1f, false);
 
+                if (IsLightRayVisible(origin, litHitPt)) return true;
+            }
 
-                if (!lightHit) return true;
+            return false;
+        }
+
+        private bool IsLightRayVisible(Vector3 start, Vector3 end)
+        {
+            int numSteps = 20;
+            Vector3 t = end - start;
+            for(int i = 0; i < numSteps; i++)
+            {
+                Vector3 endPt = start + t * (i / numSteps);
+
+                // Account for player field of view 
+                float angle = Vector3.Angle((endPt - transform.position).normalized, transform.up);
+                if(angle < fov / 2)
+                {
+                    if (!Physics2D.Linecast(transform.position, endPt, obstacleLayer)) return true;
+                }
             }
 
             return false;
