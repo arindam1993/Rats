@@ -11,7 +11,7 @@
 using System.Collections;
 
 using UnityEngine;
-
+using UnityEngine.Experimental.Rendering.Universal;
 using Photon.Pun.UtilityScripts;
 using Hashtable = ExitGames.Client.Photon.Hashtable;
 
@@ -40,6 +40,12 @@ namespace Photon.Pun.Demo.Asteroids
 
         private bool controllable = true;
 
+
+        private Light2D Flashlight;
+        private Light2D Headlight;
+        private int lightLayer;
+        private int obstacleLayer;
+
         #region UNITY
 
         public void Awake()
@@ -48,6 +54,9 @@ namespace Photon.Pun.Demo.Asteroids
 
             rigidbody = GetComponent<Rigidbody2D>();
             collider = GetComponent<Collider>();
+
+            lightLayer = 1 << LayerMask.NameToLayer("Light");
+            obstacleLayer = 1 << LayerMask.NameToLayer("Obstacle");
         }
 
         public void Start()
@@ -57,6 +66,15 @@ namespace Photon.Pun.Demo.Asteroids
             animator = renderObj.GetComponent<Animator>();
 
             Renderer r = renderObj.GetComponent<Renderer>();
+
+            Flashlight = transform.Find("Flashlight").GetComponent<Light2D>();
+            Headlight = transform.Find("Headlight").GetComponent<Light2D>();
+
+            if (photonView.IsMine)
+            {
+                Headlight.intensity = 1.0f;
+                Flashlight.intensity = 1.0f;
+            }
 
             lastPosition = transform.position;
             r.material.SetColor("Base Map", AsteroidsGame.GetColor(photonView.Owner.GetPlayerNumber()));
@@ -69,6 +87,8 @@ namespace Photon.Pun.Demo.Asteroids
             {
                 return;
             }
+
+            UpdateVisibleLights();
 
             moveDirection = new Vector3(Input.GetAxis("Horizontal"), Input.GetAxis("Vertical"), 0.0f);
             mousePosition = Input.mousePosition;
@@ -84,6 +104,55 @@ namespace Photon.Pun.Demo.Asteroids
             {
                 shootingTimer -= Time.deltaTime;
             }
+        }
+
+        private void UpdateVisibleLights()
+        {   
+            // Find all lights in a circluar range
+            Collider2D[] inRange = Physics2D.OverlapCircleAll(transform.position, 8.0f, lightLayer);
+
+            foreach(Collider2D c in inRange)
+            {
+                GameObject playerGO = c.transform.parent.gameObject;
+                Spaceship player = playerGO.GetComponent<Spaceship>();
+                if (player && player != this)
+                {
+                    if (IsEnemyLightVisible(player))
+                    {
+                        player.Flashlight.intensity = 1.0f;
+                    } else
+                    {
+                        player.Flashlight.intensity = 0.0f;
+                    } 
+                }
+            }
+
+        }
+
+        private bool IsEnemyLightVisible(Spaceship player)
+        {
+            // if I have line of sight to the enemy then i definitely hcan see the light
+            //if (!Physics2D.Linecast(transform.position, player.transform.position, obstacleLayer)) return true;
+
+            //Sweep the light cone
+            Vector3 origin = player.transform.position;
+            int numSteps = 20;
+            float lightAngle = player.Flashlight.pointLightOuterAngle;
+            float lightRadius = player.Flashlight.pointLightOuterRadius;
+            float angleStep = lightAngle / numSteps;
+
+            Vector3 leftEdge = Quaternion.AngleAxis(lightAngle / 2, new Vector3(0, 0, 1)) * (transform.forward * lightRadius);
+
+
+            for(int i = 0; i < numSteps; i++)
+            {
+                float currAngle = i * angleStep;
+                Vector3 conePt = origin + Quaternion.AngleAxis(-currAngle, new Vector3(0, 0, 1)) * leftEdge;
+                Debug.DrawLine(origin, conePt);
+                if (!Physics2D.Linecast(origin, conePt, obstacleLayer)) return true;
+            }
+
+            return false;
         }
 
         public void FixedUpdate()
