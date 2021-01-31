@@ -85,7 +85,7 @@ namespace Photon.Pun.Demo.Asteroids
         {
             if (!photonView.IsMine)
             {
-                //Flashlight.enabled = false;
+                Flashlight.enabled = false;
             }
 
             if (!photonView.IsMine || !controllable)
@@ -122,7 +122,7 @@ namespace Photon.Pun.Demo.Asteroids
         private void UpdateVisibleLights()
         {   
             // Find all lights in a circluar range
-            Collider2D[] inRange = Physics2D.OverlapCircleAll(transform.position, 8.0f, lightLayer);
+            Collider2D[] inRange = Physics2D.OverlapCircleAll(transform.position, 10.0f, lightLayer);
 
             foreach(Collider2D c in inRange)
             {
@@ -135,7 +135,7 @@ namespace Photon.Pun.Demo.Asteroids
                     {
                         player.Flashlight.enabled = true;
                         player.Flashlight.intensity = 1.0f;
-                    } 
+                    }
                 }
             }
 
@@ -144,27 +144,34 @@ namespace Photon.Pun.Demo.Asteroids
         private bool IsEnemyLightVisible(Spaceship player)
         {
             // if I have line of sight to the enemy then i definitely hcan see the light
-            //if (!Physics2D.Linecast(transform.position, player.transform.position, obstacleLayer)) return true;
+            if (!Physics2D.Linecast(transform.position, player.transform.position, obstacleLayer)) return true;
 
             //Sweep the light cone
             Vector3 origin = player.transform.position;
-            int numSteps = 20;
+            int numSteps = 50;
             float lightAngle = player.Flashlight.pointLightOuterAngle;
             float lightRadius = player.Flashlight.pointLightOuterRadius;
             float angleStep = lightAngle / numSteps;
 
-            Vector3 leftEdge = Quaternion.AngleAxis(lightAngle / 2, new Vector3(0, 0, 1)) * (transform.forward * lightRadius);
-
+            Vector3 leftEdge = Quaternion.AngleAxis(lightAngle / 2, new Vector3(0, 0, -1)) * (player.transform.up * lightRadius);
 
             for(int i = 0; i < numSteps; i++)
             {
                 float currAngle = i * angleStep;
-                Vector3 conePt = origin + Quaternion.AngleAxis(-currAngle, new Vector3(0, 0, 1)) * leftEdge;
-                Debug.DrawLine(origin + new Vector3(0, 0, -50), conePt + new Vector3(0, 0, -50), Color.green, 0.1f, false);
-                if (!Physics2D.Linecast(origin, conePt, obstacleLayer)) return true;
+                Vector3 conePt = origin + Quaternion.AngleAxis(-currAngle, new Vector3(0, 0, -1)) * leftEdge;
+                RaycastHit2D hit = Physics2D.Linecast(origin, conePt, obstacleLayer);
+                Vector3 litHitPt = hit ? toVec3(hit.point + hit.normal * 0.0001f) : conePt;
+                Debug.DrawLine(origin, litHitPt , Color.green, 0.1f, false);
+                Debug.DrawLine(transform.position, litHitPt , Color.yellow, 0.1f, false);
+
+                if (!Physics2D.Linecast(transform.position, litHitPt, obstacleLayer)) return true;
             }
 
             return false;
+        }
+
+        Vector3 toVec3(Vector2 v) {
+            return new Vector3(v.x, v.y, 0);
         }
 
         public void FixedUpdate()
