@@ -70,7 +70,7 @@ namespace Photon.Pun.Demo.Asteroids
             Flashlight = transform.Find("Flashlight").GetComponent<Light2D>();
             Headlight = transform.Find("Headlight").GetComponent<Light2D>();
 
-            if (photonView.IsMine)
+            // if (photonView.IsMine)
             {
                 Headlight.intensity = 1.0f;
                 Flashlight.intensity = 1.0f;
@@ -83,7 +83,7 @@ namespace Photon.Pun.Demo.Asteroids
 
         public void Update()
         {
-            if (!photonView.IsMine)
+            // if (!photonView.IsMine)
             {
                 Flashlight.enabled = false;
             }
@@ -111,16 +111,20 @@ namespace Photon.Pun.Demo.Asteroids
 
         public void LateUpdate()
         {
+
+            UpdateVisibleLights();
             if (!photonView.IsMine || !controllable)
             {
                 return;
             }
 
-            UpdateVisibleLights();
         }
 
         private void UpdateVisibleLights()
         {   
+            Flashlight.enabled = true;
+            Flashlight.intensity = 1.0f;
+            return;
             // Find all lights in a circluar range
             Collider2D[] inRange = Physics2D.OverlapCircleAll(transform.position, 10.0f, lightLayer);
 
