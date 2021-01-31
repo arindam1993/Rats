@@ -57,6 +57,7 @@ MonoBehaviour:
   OwnershipTransfer: 0
   ObservedComponents:
   - {fileID: 822547319579844082}
+  - {fileID: 11435718}
   viewIdField: 0
   InstantiationId: -1
   isRuntimeInstantiated: 0
@@ -73,6 +74,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   MovementSpeed: 5
+  fov: 160
+  IsFlashlightOn: 0
   BulletPrefab: {fileID: 152888, guid: 5624ee9da9d10514ea7b808e83979c85, type: 3}
 --- !u!50 &6471090786988842193
 Rigidbody2D:
@@ -154,9 +157,9 @@ GameObject:
   m_Component:
   - component: {fileID: 1483872789978123707}
   - component: {fileID: 7905732871521178058}
-  m_Layer: 8
+  m_Layer: 0
   m_Name: Headlight
-  m_TagString: Untagged
+  m_TagString: Light
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -168,7 +171,7 @@ Transform:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1717587291830659042}
-  m_LocalRotation: {x: -0, y: -0, z: -0.0027007319, w: 0.99999636}
+  m_LocalRotation: {x: -0, y: -0, z: -0.0013653386, w: 0.9999991}
   m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_Children: []
@@ -191,7 +194,7 @@ MonoBehaviour:
   m_BlendStyleIndex: 0
   m_FalloffIntensity: 0.5
   m_Color: {r: 1, g: 1, b: 1, a: 1}
-  m_Intensity: 1
+  m_Intensity: 0
   m_LightVolumeOpacity: 0
   m_ApplyToSortingLayers: 00000000
   m_LightCookieSprite: {fileID: 0}
@@ -203,7 +206,7 @@ MonoBehaviour:
   m_PointLightInnerAngle: 359.02
   m_PointLightOuterAngle: 360
   m_PointLightInnerRadius: 0
-  m_PointLightOuterRadius: 1.2
+  m_PointLightOuterRadius: 2.4155247
   m_PointLightDistance: 3
   m_PointLightQuality: 1
   m_ShapeLightParametricSides: 5
@@ -226,9 +229,11 @@ GameObject:
   m_Component:
   - component: {fileID: 3884511207206224096}
   - component: {fileID: 2352724426422534107}
-  m_Layer: 8
+  - component: {fileID: 6821667869397320344}
+  - component: {fileID: 3304271642822222722}
+  m_Layer: 7
   m_Name: Flashlight
-  m_TagString: Untagged
+  m_TagString: Light
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -261,20 +266,20 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   m_LightType: 3
   m_BlendStyleIndex: 0
-  m_FalloffIntensity: 0.048
-  m_Color: {r: 0.33962262, g: 0.14578141, b: 0.2884701, a: 1}
-  m_Intensity: 1
-  m_LightVolumeOpacity: 0.034
+  m_FalloffIntensity: 0.019
+  m_Color: {r: 1, g: 1, b: 1, a: 1}
+  m_Intensity: 0
+  m_LightVolumeOpacity: 0
   m_ApplyToSortingLayers: 00000000
   m_LightCookieSprite: {fileID: 0}
   m_UseNormalMap: 1
   m_LightOrder: 0
   m_AlphaBlendOnOverlap: 1
-  m_ShadowIntensity: 0.98
+  m_ShadowIntensity: 1
   m_ShadowVolumeIntensity: 0.743
-  m_PointLightInnerAngle: 50.510002
-  m_PointLightOuterAngle: 66.97
-  m_PointLightInnerRadius: 0.9700218
+  m_PointLightInnerAngle: 56
+  m_PointLightOuterAngle: 66.52
+  m_PointLightInnerRadius: 8
   m_PointLightOuterRadius: 10
   m_PointLightDistance: 3
   m_PointLightQuality: 1
@@ -288,6 +293,58 @@ MonoBehaviour:
   - {x: 0.5, y: -0.5, z: 0}
   - {x: 0.5, y: 0.5, z: 0}
   - {x: -0.5, y: 0.5, z: 0}
+--- !u!60 &6821667869397320344
+PolygonCollider2D:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1948930683073730661}
+  m_Enabled: 0
+  m_Density: 1
+  m_Material: {fileID: 0}
+  m_IsTrigger: 1
+  m_UsedByEffector: 0
+  m_UsedByComposite: 0
+  m_Offset: {x: 0, y: 0}
+  m_SpriteTilingProperty:
+    border: {x: 0, y: 0, z: 0, w: 0}
+    pivot: {x: 0, y: 0}
+    oldSize: {x: 0, y: 0}
+    newSize: {x: 0, y: 0}
+    adaptiveTilingThreshold: 0
+    drawMode: 0
+    adaptiveTiling: 0
+  m_AutoTiling: 0
+  m_Points:
+    m_Paths:
+    - - {x: 5.4934745, y: 8.386978}
+      - {x: -0.07283592, y: 10.4869}
+      - {x: -5.5215216, y: 8.357406}
+      - {x: -0.7334574, y: 1.1029302}
+      - {x: 0.6606213, y: 1.1211395}
+      - {x: 5.4851036, y: 8.375614}
+--- !u!50 &3304271642822222722
+Rigidbody2D:
+  serializedVersion: 4
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1948930683073730661}
+  m_BodyType: 1
+  m_Simulated: 1
+  m_UseFullKinematicContacts: 0
+  m_UseAutoMass: 0
+  m_Mass: 1
+  m_LinearDrag: 0
+  m_AngularDrag: 0.05
+  m_GravityScale: 1
+  m_Material: {fileID: 0}
+  m_Interpolate: 0
+  m_SleepingMode: 1
+  m_CollisionDetection: 0
+  m_Constraints: 0
 --- !u!1 &7879863372989610892
 GameObject:
   m_ObjectHideFlags: 0

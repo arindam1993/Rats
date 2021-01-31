@@ -11,15 +11,18 @@
 using System.Collections;
 
 using UnityEngine;
-
+using UnityEngine.Experimental.Rendering.Universal;
 using Photon.Pun.UtilityScripts;
 using Hashtable = ExitGames.Client.Photon.Hashtable;
 
 namespace Photon.Pun.Demo.Asteroids
 {
-    public class Spaceship : MonoBehaviour
+
+    public class Spaceship : MonoBehaviour, IPunObservable
     {
         public float MovementSpeed;
+        public float fov;
+        public bool IsFlashlightOn;
 
         public GameObject BulletPrefab;
 
@@ -40,6 +43,14 @@ namespace Photon.Pun.Demo.Asteroids
 
         private bool controllable = true;
 
+
+        private Light2D Flashlight;
+        private Collider2D FlashlightTrigger;
+        private Light2D Headlight;
+        private int lightLayer;
+        private int obstacleLayer;
+        private int playerLayer;
+
         #region UNITY
 
         public void Awake()
@@ -48,6 +59,11 @@ namespace Photon.Pun.Demo.Asteroids
 
             rigidbody = GetComponent<Rigidbody2D>();
             collider = GetComponent<Collider>();
+
+            lightLayer = 1 << LayerMask.NameToLayer("Light");
+            obstacleLayer = 1 << LayerMask.NameToLayer("Obstacle");
+            playerLayer = 1 << LayerMask.NameToLayer("Player");
+
         }
 
         public void Start()
@@ -57,6 +73,21 @@ namespace Photon.Pun.Demo.Asteroids
             animator = renderObj.GetComponent<Animator>();
 
             Renderer r = renderObj.GetComponent<Renderer>();
+
+            Flashlight = transform.Find("Flashlight").GetComponent<Light2D>();
+            FlashlightTrigger = transform.Find("Flashlight").GetComponent<Collider2D>();
+            Headlight = transform.Find("Headlight").GetComponent<Light2D>();
+
+            if (photonView.IsMine)
+            {
+                Headlight.intensity = 1.0f;
+                Flashlight.intensity = 1.0f;
+                FlashlightTrigger.enabled = true;
+                IsFlashlightOn = true;
+            } else
+            {
+                AsteroidsGameManager.Instance.AddNotMySpaceship(this);
+            }
 
             lastPosition = transform.position;
             r.material.SetColor("Base Map", AsteroidsGame.GetColor(photonView.Owner.GetPlayerNumber()));
@@ -70,20 +101,89 @@ namespace Photon.Pun.Demo.Asteroids
                 return;
             }
 
+            UpdateVisibleLights();
+
             moveDirection = new Vector3(Input.GetAxis("Horizontal"), Input.GetAxis("Vertical"), 0.0f);
             mousePosition = Input.mousePosition;
 
-            if (Input.GetButton("Jump") && shootingTimer <= 0.0)
+            if (Input.GetButtonUp("Jump"))
             {
-                shootingTimer = 0.2f;
+                IsFlashlightOn = !IsFlashlightOn;
+                Flashlight.enabled = IsFlashlightOn;
+            }
+        }
 
-                photonView.RPC("Fire", RpcTarget.AllViaServer, rigidbody.position, rigidbody.rotation);
+
+        private void UpdateVisibleLights()
+        {
+            foreach (Spaceship other in AsteroidsGameManager.Instance.notMySpaceships)
+            {
+                other.Flashlight.enabled = false;
             }
 
-            if (shootingTimer > 0.0f)
+            foreach (Spaceship other in AsteroidsGameManager.Instance.notMySpaceships)
             {
-                shootingTimer -= Time.deltaTime;
+                if(Vector3.Distance(transform.position, other.transform.position) < 20.0f)
+                {
+
+                    Debug.DrawLine(transform.position, other.transform.position, Color.red, 0.1f, false);
+                    if (other.IsFlashlightOn && IsEnemyLightVisible(other))
+                    {
+                        other.Flashlight.enabled = true;
+                        other.Flashlight.intensity = 1.0f;
+                    }
+                }
             }
+        }
+
+        private bool IsEnemyLightVisible(Spaceship player)
+        {
+            // if I have line of sight to the enemy then i definitely hcan see the light
+            // if (!Physics2D.Linecast(transform.position, player.transform.position, obstacleLayer)) return true;
+
+            //Sweep the light cone
+            Vector3 origin = player.transform.position;
+            int numSteps = 50;
+            float lightAngle = player.Flashlight.pointLightOuterAngle;
+            float lightRadius = player.Flashlight.pointLightOuterRadius;
+            float angleStep = lightAngle / numSteps;
+
+            Vector3 leftEdge = Quaternion.AngleAxis(lightAngle / 2, new Vector3(0, 0, -1)) * (player.transform.up * lightRadius);
+
+            for(int i = 0; i < numSteps; i++)
+            {
+                float currAngle = i * angleStep;
+                Vector3 conePt = origin + Quaternion.AngleAxis(-currAngle, new Vector3(0, 0, -1)) * leftEdge;
+                RaycastHit2D hit = Physics2D.Linecast(origin, conePt, obstacleLayer | playerLayer);
+                Vector3 litHitPt = hit ? toVec3(hit.point + hit.normal * 0.0001f) : conePt;
+
+                if (IsLightRayVisible(origin, litHitPt)) return true;
+            }
+
+            return false;
+        }
+
+        private bool IsLightRayVisible(Vector3 start, Vector3 end)
+        {
+            int numSteps = 20;
+            Vector3 t = end - start;
+            for(int i = 0; i < numSteps; i++)
+            {
+                Vector3 endPt = start + t * (i / numSteps);
+
+                // Account for player field of view 
+                float angle = Vector3.Angle((endPt - transform.position).normalized, transform.up);
+                if(angle < fov / 2)
+                {
+                    if (!Physics2D.Linecast(transform.position, endPt, obstacleLayer)) return true;
+                }
+            }
+
+            return false;
+        }
+
+        Vector3 toVec3(Vector2 v) {
+            return new Vector3(v.x, v.y, 0);
         }
 
         public void FixedUpdate()
@@ -112,6 +212,28 @@ namespace Photon.Pun.Demo.Asteroids
 
             Camera.main.transform.position = new Vector3(transform.position.x, transform.position.y, cameraZOffset);
 
+        }
+
+        private void OnTriggerEnter2D(Collider2D collision)
+        {
+            if (!photonView.IsMine)
+            {
+                if (collision.gameObject.tag == "Light")
+                {
+                    Headlight.enabled = true;
+                }
+            }
+        }
+
+        private void OnTriggerExit2D(Collider2D collision)
+        {
+            if (!photonView.IsMine)
+            {
+                if (collision.gameObject.tag == "Light")
+                {
+                    Headlight.enabled = false;
+                }
+            }
         }
 
         #endregion
@@ -196,7 +318,21 @@ namespace Photon.Pun.Demo.Asteroids
 
             controllable = true;
         }
-        
+
+        public void OnPhotonSerializeView(PhotonStream stream, PhotonMessageInfo info)
+        {
+            if (stream.IsWriting)
+            {
+                //We own this player: send the others our data
+                stream.SendNext(IsFlashlightOn);
+            }
+            else
+            {
+                //Network player, receive data
+                IsFlashlightOn = (bool)stream.ReceiveNext();
+            }
+        }
+
         #endregion
     }
 }
