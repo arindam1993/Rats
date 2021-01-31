@@ -111,6 +111,10 @@ namespace Photon.Pun.Demo.Asteroids
                 IsFlashlightOn = !IsFlashlightOn;
                 Flashlight.enabled = IsFlashlightOn;
             }
+
+            if (Input.GetMouseButtonDown(0)) {
+                photonView.RPC("Fire", RpcTarget.AllViaServer);
+            }
         }
 
 
@@ -288,27 +292,9 @@ namespace Photon.Pun.Demo.Asteroids
         }
 
         [PunRPC]
-        public void Fire(Vector3 position, Quaternion rotation, PhotonMessageInfo info)
+        public void Fire(PhotonMessageInfo info)
         {
-            float lag = (float) (PhotonNetwork.Time - info.SentServerTime);
-            GameObject bullet;
-
-            /** Use this if you want to fire one bullet at a time **/
-            bullet = Instantiate(BulletPrefab, rigidbody.position, Quaternion.identity) as GameObject;
-            bullet.GetComponent<Bullet>().InitializeBullet(photonView.Owner, (rotation * Vector3.forward), Mathf.Abs(lag));
-
-
-            /** Use this if you want to fire two bullets at once **/
-            //Vector3 baseX = rotation * Vector3.right;
-            //Vector3 baseZ = rotation * Vector3.forward;
-
-            //Vector3 offsetLeft = -1.5f * baseX - 0.5f * baseZ;
-            //Vector3 offsetRight = 1.5f * baseX - 0.5f * baseZ;
-
-            //bullet = Instantiate(BulletPrefab, rigidbody.position + offsetLeft, Quaternion.identity) as GameObject;
-            //bullet.GetComponent<Bullet>().InitializeBullet(photonView.Owner, baseZ, Mathf.Abs(lag));
-            //bullet = Instantiate(BulletPrefab, rigidbody.position + offsetRight, Quaternion.identity) as GameObject;
-            //bullet.GetComponent<Bullet>().InitializeBullet(photonView.Owner, baseZ, Mathf.Abs(lag));
+            animator.SetTrigger("attack");
         }
 
         [PunRPC]
