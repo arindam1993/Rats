@@ -78,7 +78,11 @@ MonoBehaviour:
   MovementSpeed: 5
   fov: 160
   IsFlashlightOn: 0
+  KnockbackVelocity: {x: 0, y: 0, z: 0}
   BulletPrefab: {fileID: 152888, guid: 5624ee9da9d10514ea7b808e83979c85, type: 3}
+  AttackCooldown: 0.3
+  AttackRadius: 1
+  AttackIntensity: 15
 --- !u!50 &6471090786988842193
 Rigidbody2D:
   serializedVersion: 4
