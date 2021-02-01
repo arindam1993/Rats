@@ -265,13 +265,6 @@ namespace Photon.Pun.Demo.Asteroids
 
         #region COROUTINES
 
-        private IEnumerator WaitForRespawn()
-        {
-            yield return new WaitForSeconds(AsteroidsGame.PLAYER_RESPAWN_TIME);
-
-            photonView.RPC("RespawnSpaceship", RpcTarget.AllViaServer);
-        }
-
         private IEnumerator AnimationWatcher()
         {
             while (true)
@@ -286,32 +279,6 @@ namespace Photon.Pun.Demo.Asteroids
         #endregion
 
         #region PUN CALLBACKS
-
-        [PunRPC]
-        public void DestroySpaceship()
-        {
-            rigidbody.velocity = Vector3.zero;
-
-            collider.enabled = false;
-
-            controllable = false;
-
-
-            if (photonView.IsMine)
-            {
-                object lives;
-                if (PhotonNetwork.LocalPlayer.CustomProperties.TryGetValue(AsteroidsGame.PLAYER_LIVES, out lives))
-                {
-                    PhotonNetwork.LocalPlayer.SetCustomProperties(new Hashtable {{AsteroidsGame.PLAYER_LIVES, ((int) lives <= 1) ? 0 : ((int) lives - 1)}});
-
-                    if (((int) lives) > 1)
-                    {
-                        StartCoroutine("WaitForRespawn");
-                    }
-                }
-            }
-        }
-
         [PunRPC]
         public void Fire(PhotonMessageInfo info)
         {
@@ -328,26 +295,26 @@ namespace Photon.Pun.Demo.Asteroids
                     if(player != this)
                     {
                         Vector3 hitDirection = Vector3.Normalize(player.transform.position - transform.position);
-                        //player.photonView.RPC("Knockback", RpcTarget.AllViaServer, hitDirection * AttackIntensity);
-                        player.photonView.RPC("DestroySpaceship", RpcTarget.AllViaServer);
+                        player.photonView.RPC("Attacked", RpcTarget.AllViaServer, hitDirection * AttackIntensity);  
                     }
                 }
             }
         }
 
         [PunRPC]
-        public void Knockback(Vector3 knockbackDirection, PhotonMessageInfo info)
+        public void Attacked(Vector3 knockbackDirection, PhotonMessageInfo info)
         {
             KnockbackVelocity = knockbackDirection;
             initKnockbackVelocity = knockbackDirection;
-        }
 
-        [PunRPC]
-        public void RespawnSpaceship()
-        {
-            collider.enabled = true;
-
-            controllable = true;
+            if (photonView.IsMine)
+            {
+                object lives;
+                if (PhotonNetwork.LocalPlayer.CustomProperties.TryGetValue(AsteroidsGame.PLAYER_LIVES, out lives))
+                {
+                    PhotonNetwork.LocalPlayer.SetCustomProperties(new Hashtable { { AsteroidsGame.PLAYER_LIVES, ((int)lives <= 1) ? 0 : ((int)lives - 1) } });
+                }
+            }
         }
 
         public void OnPhotonSerializeView(PhotonStream stream, PhotonMessageInfo info)
