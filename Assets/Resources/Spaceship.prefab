@@ -16,7 +16,6 @@ GameObject:
   - component: {fileID: 2910134419549085348}
   - component: {fileID: -8829669843875116104}
   - component: {fileID: -3394320803978041021}
-  - component: {fileID: 8899433973412275965}
   m_Layer: 8
   m_Name: Spaceship
   m_TagString: Player
@@ -262,14 +261,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 9c4c3c9993f86a3489f5173f169f3738, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
---- !u!81 &8899433973412275965
-AudioListener:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 178952}
-  m_Enabled: 1
 --- !u!1 &1717587291830659042
 GameObject:
   m_ObjectHideFlags: 0

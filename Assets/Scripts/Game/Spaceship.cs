@@ -31,7 +31,7 @@ namespace Photon.Pun.Demo.Asteroids
         private PhotonView photonView;
 
         private new Rigidbody2D rigidbody;
-        private new Collider collider;
+        private new Collider2D collider;
 
         private Vector3 moveDirection = Vector3.up;
         private Vector3 mousePosition = Vector3.zero;
@@ -64,7 +64,7 @@ namespace Photon.Pun.Demo.Asteroids
             photonView = GetComponent<PhotonView>();
 
             rigidbody = GetComponent<Rigidbody2D>();
-            collider = GetComponent<Collider>();
+            collider = GetComponent<Collider2D>();
 
             lightLayer = 1 << LayerMask.NameToLayer("Light");
             obstacleLayer = 1 << LayerMask.NameToLayer("Obstacle");
@@ -131,7 +131,11 @@ namespace Photon.Pun.Demo.Asteroids
         {
             foreach (Spaceship other in AsteroidsGameManager.Instance.notMySpaceships)
             {
-                other.Flashlight.enabled = false;
+                // AHK: why would a flashlight be null here during a death?
+                if (other.Flashlight)
+                {
+                    other.Flashlight.enabled = false;
+                }
             }
 
             foreach (Spaceship other in AsteroidsGameManager.Instance.notMySpaceships)
@@ -324,7 +328,8 @@ namespace Photon.Pun.Demo.Asteroids
                     if(player != this)
                     {
                         Vector3 hitDirection = Vector3.Normalize(player.transform.position - transform.position);
-                        player.photonView.RPC("Knockback", RpcTarget.AllViaServer, hitDirection * AttackIntensity);
+                        //player.photonView.RPC("Knockback", RpcTarget.AllViaServer, hitDirection * AttackIntensity);
+                        player.photonView.RPC("DestroySpaceship", RpcTarget.AllViaServer);
                     }
                 }
             }

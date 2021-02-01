@@ -100,7 +100,7 @@ namespace Photon.Pun.Demo.Asteroids
 
         public override void OnDisconnected(DisconnectCause cause)
         {
-            UnityEngine.SceneManagement.SceneManager.LoadScene("DemoAsteroids-LobbyScene");
+            UnityEngine.SceneManagement.SceneManager.LoadScene("LobbyScene");
         }
 
         public override void OnLeftRoom()
@@ -176,39 +176,34 @@ namespace Photon.Pun.Demo.Asteroids
 
         private void CheckEndOfGame()
         {
-            bool allDestroyed = true;
+            int numAlive = PhotonNetwork.PlayerList.Length;
+            Player lastPlayerAlive = null;
 
             foreach (Player p in PhotonNetwork.PlayerList)
             {
                 object lives;
                 if (p.CustomProperties.TryGetValue(AsteroidsGame.PLAYER_LIVES, out lives))
                 {
-                    if ((int) lives > 0)
+                    if ((int) lives <= 0)
                     {
-                        allDestroyed = false;
-                        break;
+                        numAlive -= 1;
+                    }
+                    else
+                    {
+                        lastPlayerAlive = p;
                     }
                 }
             }
 
-            if (allDestroyed)
+            if (numAlive == 1)
             {
                 if (PhotonNetwork.IsMasterClient)
                 {
                     StopAllCoroutines();
                 }
 
-                string winner = "";
-                int score = -1;
-
-                foreach (Player p in PhotonNetwork.PlayerList)
-                {
-                    if (p.GetScore() > score)
-                    {
-                        winner = p.NickName;
-                        score = p.GetScore();
-                    }
-                }
+                string winner = lastPlayerAlive.NickName;
+                int score = lastPlayerAlive.GetScore();
 
                 StartCoroutine(EndOfGame(winner, score));
             }
