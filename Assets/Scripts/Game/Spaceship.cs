@@ -102,28 +102,32 @@ namespace Photon.Pun.Demo.Asteroids
 
         public void Update()
         {
-            if (!photonView.IsMine || !controllable)
+            if (!photonView.IsMine)
             {
                 return;
             }
 
             UpdateVisibleLights();
 
-            moveDirection = new Vector3(Input.GetAxis("Horizontal"), Input.GetAxis("Vertical"), 0.0f);
-            mousePosition = Input.mousePosition;
-
-            if (Input.GetButtonUp("Jump"))
+            if (controllable)
             {
-                IsFlashlightOn = !IsFlashlightOn;
-                Flashlight.enabled = IsFlashlightOn;
-            }
+                moveDirection = new Vector3(Input.GetAxis("Horizontal"), Input.GetAxis("Vertical"), 0.0f);
+                mousePosition = Input.mousePosition;
 
-            if (Input.GetMouseButtonDown(0) && attackTimer <= 0.0f) {
-                photonView.RPC("Fire", RpcTarget.AllViaServer);
-                attackTimer = AttackCooldown;
-            }
+                if (Input.GetButtonUp("Jump"))
+                {
+                    IsFlashlightOn = !IsFlashlightOn;
+                    Flashlight.enabled = IsFlashlightOn;
+                }
 
-            attackTimer -= Time.deltaTime;
+                if (Input.GetMouseButtonDown(0) && attackTimer <= 0.0f)
+                {
+                    photonView.RPC("Fire", RpcTarget.AllViaServer);
+                    attackTimer = AttackCooldown;
+                }
+
+                attackTimer -= Time.deltaTime;
+            }
         }
 
 
@@ -210,11 +214,6 @@ namespace Photon.Pun.Demo.Asteroids
                 return;
             }
 
-            if (!controllable)
-            {
-                return;
-            }
-
             // If being knocked back then only knockback
             if (Vector3.Dot(initKnockbackVelocity, KnockbackVelocity) > 0.0f)
             {
@@ -222,7 +221,7 @@ namespace Photon.Pun.Demo.Asteroids
                 //decay knockback veclocity
                 Vector3 decay = 2.0f * Time.fixedDeltaTime * -1.0f * initKnockbackVelocity;
                 KnockbackVelocity = KnockbackVelocity + decay;
-            } else
+            } else if (controllable)
             {
                 Ray mouseRay = Camera.main.ScreenPointToRay(mousePosition);
                 float t = 0.0f;
@@ -236,6 +235,7 @@ namespace Photon.Pun.Demo.Asteroids
 
                 rigidbody.MovePosition(transform.position + moveDirection * MovementSpeed * Time.fixedDeltaTime);
             }
+
             Camera.main.transform.position = new Vector3(transform.position.x, transform.position.y, cameraZOffset);
         }
 
@@ -264,6 +264,7 @@ namespace Photon.Pun.Demo.Asteroids
         #endregion
 
         #region COROUTINES
+
 
         private IEnumerator AnimationWatcher()
         {
@@ -312,7 +313,12 @@ namespace Photon.Pun.Demo.Asteroids
                 object lives;
                 if (PhotonNetwork.LocalPlayer.CustomProperties.TryGetValue(AsteroidsGame.PLAYER_LIVES, out lives))
                 {
-                    PhotonNetwork.LocalPlayer.SetCustomProperties(new Hashtable { { AsteroidsGame.PLAYER_LIVES, ((int)lives <= 1) ? 0 : ((int)lives - 1) } });
+                    int decrLives = ((int)lives <= 1) ? 0 : ((int)lives - 1);
+                    PhotonNetwork.LocalPlayer.SetCustomProperties(new Hashtable { { AsteroidsGame.PLAYER_LIVES, decrLives } });
+                    if (decrLives == 0)
+                    {
+                        controllable = false;
+                    }
                 }
             }
         }
