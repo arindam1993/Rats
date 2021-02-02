@@ -135,19 +135,18 @@ namespace Photon.Pun.Demo.Asteroids
         {
             foreach (Spaceship other in AsteroidsGameManager.Instance.notMySpaceships)
             {
-                // AHK: why would a other spaceships be null here during a death?
-                if (!other) { continue; }
-                
-                other.Flashlight.enabled = false;
+                // AHK: why would a flashlight be null here during a death?
+                if (other.Flashlight)
+                {
+                    other.Flashlight.enabled = false;
+                }
             }
 
             foreach (Spaceship other in AsteroidsGameManager.Instance.notMySpaceships)
             {
-                // AHK: why would a other spaceships be null here during a death?
-                if (!other) { continue; }
-
-                if (Vector3.Distance(transform.position, other.transform.position) < 20.0f)
+                if(Vector3.Distance(transform.position, other.transform.position) < 20.0f)
                 {
+
                     Debug.DrawLine(transform.position, other.transform.position, Color.red, 0.1f, false);
                     if (other.IsFlashlightOn && IsEnemyLightVisible(other))
                     {
