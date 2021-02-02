@@ -16,6 +16,7 @@ GameObject:
   - component: {fileID: 2910134419549085348}
   - component: {fileID: -8829669843875116104}
   - component: {fileID: -3394320803978041021}
+  - component: {fileID: -3096023680329813339}
   m_Layer: 8
   m_Name: Spaceship
   m_TagString: Player
@@ -164,7 +165,7 @@ AudioSource:
   serializedVersion: 4
   OutputAudioMixerGroup: {fileID: -85056640024619807, guid: e14b23044759db347a2ab93ada985b56, type: 2}
   m_audioClip: {fileID: 8300000, guid: a66b661e41707854f841c6dadeac20be, type: 3}
-  m_PlayOnAwake: 1
+  m_PlayOnAwake: 0
   m_Volume: 1
   m_Pitch: 1
   Loop: 0
@@ -259,6 +260,18 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 9c4c3c9993f86a3489f5173f169f3738, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+--- !u!114 &-3096023680329813339
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 178952}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 9e963440ddb23ed478a3f95aa2602836, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
 --- !u!1 &1717587291830659042
